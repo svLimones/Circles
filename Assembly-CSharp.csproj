@@ -47,6 +47,7 @@
      <Compile Include="Assets\Main\Scripts\CircleObj.cs" />
      <Compile Include="Assets\Main\Scripts\GameLogic.cs" />
      <Compile Include="Assets\Main\Scripts\ResManager.cs" />
+     <None Include="Assets\Main\Res\Gradient.shader" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

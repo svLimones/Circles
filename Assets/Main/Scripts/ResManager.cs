@@ -11,15 +11,22 @@ public class ResManager : MonoBehaviour
         s256    = 256
     };
 
-    public  int                 CountCircles  = 100;
+    public  int                 PoolLength  = 100;//Max number of circles on screen
     public  GameObject          CircleModel;
-    public  int                 CircleLayer   = 8;
+    public  Material            CircleMaterial;
+    public  int                 CircleLayer = 8;
 
     private GameObject[]        circlesPool;
+    private Material[]          materialsPool;
     private Dictionary<TextureSize, Texture2D[]> texturesPool;
-    private int                 numCircles      = 0;
+    private Vector3             PoolPos         = new Vector3(100, 100, 100);
+    private int                 numCircles      = 0;//The current number of circles
 
-    private Vector3 PoolPos = new Vector3(100, 100, 100);
+    private Color[] _pix32;//spike 
+    private Color[] _pix64;
+    private Color[] _pix128;
+    private Color[] _pix256;
+
     private static ResManager instance;
     public  static ResManager Instance
     {
@@ -53,21 +60,23 @@ public class ResManager : MonoBehaviour
     {
         GameObject _circleModel;
         Texture2D  _texture;
-        circlesPool     = new GameObject[CountCircles];
+        circlesPool     = new GameObject[PoolLength];
         texturesPool    = new Dictionary<TextureSize, Texture2D[]>();
-        texturesPool.Add( TextureSize.s32,  new Texture2D[CountCircles] );
-        texturesPool.Add( TextureSize.s64,  new Texture2D[CountCircles] );
-        texturesPool.Add( TextureSize.s128, new Texture2D[CountCircles] );
-        texturesPool.Add( TextureSize.s256, new Texture2D[CountCircles] );
+        texturesPool.Add( TextureSize.s32,  new Texture2D[PoolLength] );
+        texturesPool.Add( TextureSize.s64,  new Texture2D[PoolLength] );
+        texturesPool.Add( TextureSize.s128, new Texture2D[PoolLength] );
+        texturesPool.Add( TextureSize.s256, new Texture2D[PoolLength] );
 
-        for (int i = 0; i < CountCircles; i++)
+        _pix32  = new Color[32*32];
+        _pix64  = new Color[64*64];
+        _pix128 = new Color[128*128];
+        _pix256 = new Color[256*256];
+
+        materialsPool = new Material[PoolLength];
+
+        for (int i = 0; i < PoolLength; i++)
         {
             _circleModel = Instantiate( CircleModel, PoolPos, Quaternion.identity ) as GameObject;
-            //_circleModel.layer = CircleLayer;
-            //_circleModel.AddComponent<BoxCollider>();
-            //_circleModel.AddComponent<Rigidbody>();
-            //_circleModel.rigidbody.isKinematic = true;
-            //_circleModel.rigidbody.useGravity  = false;
             _circleModel.AddComponent<CircleObj>();
             _circleModel.GetComponent<CircleObj>().Model    = _circleModel.GetComponentInChildren<Renderer>().gameObject;
             _circleModel.GetComponent<CircleObj>().Pool_ID  = i;
@@ -81,28 +90,93 @@ public class ResManager : MonoBehaviour
             texturesPool[TextureSize.s128][i] = _texture;
             _texture = new Texture2D(256, 256);
             texturesPool[TextureSize.s256][i] = _texture;
+
+            materialsPool[i] = CircleMaterial;
         }
     }
     //-----------------------------------------
     private void GenerateTexture( TextureSize size, int num )
     {
+        Color start;
+        Color end;
+        Color _color = new Color(0f,0f,0f,1f);
+        Color[] _pix = new Color[0];
+        int y = 0;
+        int x = 0;
+        int h = texturesPool[size][num].height;
+        int w = texturesPool[size][num].width;
+
+        start   = new Color(Random.Range( 0f, 1f ), Random.Range( 0f, 1f ), Random.Range( 0f, 1f ), 0.5f);
+        end     = new Color(Random.Range( 0f, 1f ), Random.Range( 0f, 1f ), Random.Range( 0f, 1f ), 0.5f);
+
+        switch( size )
+        {
+            case TextureSize.s32:
+                _pix = _pix32;
+                break;
+            case TextureSize.s64:
+                _pix = _pix64;
+                break;
+            case TextureSize.s128:
+                _pix = _pix128;
+                break;
+            case TextureSize.s256:
+                _pix = _pix256;
+                break;
+        }
+
+        while (y < h) {
+            x = 0;
+            while (x < w)
+            {
+                _color.r = Random.Range( 0f, 1f );
+                _color.g = Random.Range( 0f, 1f );
+                _color.b = Random.Range( 0f, 1f );
+                _pix[y*w + x] = _color;
+                x++;
+            }
+            y++;
+        }
+        texturesPool[size][num].SetPixels(_pix);
+        texturesPool[size][num].Apply();
         
     }
     //------------------------------------------
     public CircleObj GetCircle( TextureSize textureSize )
     {
         CircleObj obj;
+        Color color1 = new Color(0f,0f,0f,0.6f);
+        Color color2 = new Color(0f,0f,0f,0.6f);
+        Color color3 = new Color(0f,0f,0f,0.6f);
 
-        if( ++numCircles >= CountCircles ) numCircles = 0;
-        GenerateTexture( textureSize, numCircles );
+        if( ++numCircles >= PoolLength ) numCircles = 0;
         obj = circlesPool[numCircles].GetComponent<CircleObj>();
+        obj.Model.renderer.material = materialsPool[numCircles];
         obj.Model.renderer.material.mainTexture = texturesPool[textureSize][numCircles];
-        
+        GenerateTexture( textureSize, numCircles );
+
+        color1.r = Random.Range( 0f, 1f );
+        color1.g = Random.Range( 0f, 1f );
+        color1.b = Random.Range( 0f, 1f );
+
+        color2.r = Random.Range( 0f, 1f );
+        color2.g = Random.Range( 0f, 1f );
+        color2.b = Random.Range( 0f, 1f );
+
+        color3.r = Random.Range( 0f, 1f );
+        color3.g = Random.Range( 0f, 1f );
+        color3.b = Random.Range( 0f, 1f );
+
+        obj.Model.renderer.material.SetColor( "_Color1", color1);
+        obj.Model.renderer.material.SetColor( "_Color2", color2);
+        obj.Model.renderer.material.SetColor( "_Color3", color3);
+
         return obj;
     }
 
     public void PutBackCircle( int _pool_ID )
     {
+        circlesPool[_pool_ID].GetComponent<CircleObj>().StopMoving();
         circlesPool[_pool_ID].transform.position = PoolPos;
     }
 }

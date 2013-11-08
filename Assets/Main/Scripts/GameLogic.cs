@@ -12,20 +12,23 @@ public class GameLogic : MonoBehaviour
 
     public struct CircleID
     {
-        public int          ID;
+        public int          ID; //local id
         public PlayerType   PlayerType;
     };
 
-    public  Vector3     StartPositionLeft   = new Vector3(0, 0, 0);
-    public  Vector3     StartPositionRight  = new Vector3(10f, 0, 0);
-    public  float       FinishHPosition     = 10f;
-    public  float       MinCircleSize       = 0.1f;
-    public  float       MaxCircleSize       = 1f;
-    public  float       MinCircleSpeed      = 0.1f;
-    public  float       MaxCircleSpeed      = 1f;
-    public  float       SpeedGeneration     = 2f;
-    public  int         CircleLayer         = 8;
+    public Vector3     StartPositionLeft   = new Vector3(0, 0, 0);
+    public Vector3     StartPositionRight  = new Vector3(10f, 0, 0);
+    public float       FinishHPosition     = 10f;
+    public float       MinCircleSize       = 0.1f;
+    public float       MaxCircleSize       = 1f;
+    public float       MinCircleSpeed      = 0.1f;
+    public float       MaxCircleSpeed      = 1f;
+    public float       SpeedGeneration     = 2f;
+    public int         CircleLayer         = 8;
+    public AudioClip   BubbleSound;
+    public AudioSource BubbleSource;
 
+    private int                 scores;
     private CircleID            MyPlayer;
     private int                 player1RandomSeed;
     private int                 Player2RandomSeed;
@@ -38,8 +41,14 @@ public class GameLogic : MonoBehaviour
     private Ray                     __ray;
     private RaycastHit              __hit;
     //==================================
-    public void Start()
+    public IEnumerator Start()
     {
+        using( WWW www = new WWW( @"dl.dropboxusercontent.com/u/36321526/Circles/BubbleSound.unity3d" ) )
+        {
+            yield return www;
+            BubbleSound = Instantiate(www.assetBundle.mainAsset) as AudioClip;
+        }
+        scores                          = 0;
         MyPlayer.ID                     = 0;
         MyPlayer.PlayerType             = PlayerType.Server;
         player1RandomSeed               = 100;
@@ -91,11 +100,11 @@ public class GameLogic : MonoBehaviour
 
     }
     //------------------------------------
-    public void OnClick_CallBack( CircleID ID, int _pool_ID )
+    public void OnClick_CallBack( CircleID ID, int _pool_ID, float circleSize )
     {
         if( ID.PlayerType == MyPlayer.PlayerType )
         {
-            
+            scores += (int)( circleSize*100 );
         }
         ResManager.Instance.PutBackCircle( _pool_ID );
     }
@@ -115,6 +124,7 @@ public class GameLogic : MonoBehaviour
                 if(Physics.Raycast(__ray, out __hit, 100, (1<<CircleLayer)))
                 {
                     __hit.transform.gameObject.SendMessage( "OnClick", MyPlayer.PlayerType );
+                    if(BubbleSound!=null) BubbleSource.PlayOneShot( BubbleSound );
                 }
             }
         }

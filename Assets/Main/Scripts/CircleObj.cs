@@ -10,11 +10,11 @@ public class CircleObj : MonoBehaviour
         public float                        FinishHPosition;
         public float                        Speed;
         public float                        Radius;
-        public Action<GameLogic.CircleID, int>   FinishMove_CallBack;
-        public Action<GameLogic.CircleID, int>   OnClick_CallBack;
+        public Action<GameLogic.CircleID, int>          FinishMove_CallBack;
+        public Action<GameLogic.CircleID, int, float>   OnClick_CallBack;
     };
 
-    private int pool_ID = -1;
+    private int pool_ID = -1; //global id
     public  int Pool_ID
     {
         get { return pool_ID; }
@@ -40,17 +40,22 @@ public class CircleObj : MonoBehaviour
             _transform.Translate( Vector3.back * args.Speed * Time.deltaTime );
             if( _transform.position.z - args.Radius <= args.FinishHPosition )
             {
-                isMoving = false;
+                StopMoving();
                 if( args.FinishMove_CallBack!=null ) args.FinishMove_CallBack(args.ID, pool_ID);
             }
             yield return null;
         } 
     }
     //------------------------------------
+    public void StopMoving()
+    {
+        isMoving = false;
+    }
+    //------------------------------------
     public void OnClick( GameLogic.PlayerType type )
     {
         if(!isMoving) return;
         if( type != args.ID.PlayerType ) return;
-        args.OnClick_CallBack( args.ID, pool_ID );
+        args.OnClick_CallBack( args.ID, pool_ID, transform.localScale.x);
     }
 }
