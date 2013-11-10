@@ -1,10 +1,9 @@
-﻿Shader "Diffuse With Gradient Color" {
+﻿Shader "Unlit With Gradient Color" {
        Properties {
                 _MainTex ("Base (RGB)", 2D) = "white" {}
 				_Color1 ("Color1", Color) = (1,1,1,1)
 				_Color2 ("Color2", Color) = (1,1,1,1)
 				_Color3 ("Color3", Color) = (1,1,1,1)
-				_Slider1 ("Slider1", Range(1, 3)) = 2
         }
 
         SubShader {
@@ -28,7 +27,7 @@
 
                 half y = IN.uv_MainTex.y;
                 half4 grad1 = lerp(_Color1, _Color2, y);
-                half4 grad2 = lerp(_Color2, _Color3, y / _Slider1);
+                half4 grad2 = lerp(_Color2, _Color3, y / 2.0);
                 half4 grad = lerp(grad1, grad2, y);
 
 				float4 tex = tex2D (_MainTex, IN.uv_MainTex);

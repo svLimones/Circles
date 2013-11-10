@@ -4,17 +4,23 @@ using System;
 
 public class CircleObj : MonoBehaviour
 {
-    public struct CircleArg
+    public struct CircleID
     {
-        public GameLogic.CircleID           ID;
-        public float                        FinishHPosition;
-        public float                        Speed;
-        public float                        Radius;
-        public Action<GameLogic.CircleID, int>          FinishMove_CallBack;
-        public Action<GameLogic.CircleID, int, float>   OnClick_CallBack;
+        public int                  ID; //local id for player
+        public GameLogic.PlayerType PlayerType;
     };
 
-    private int pool_ID = -1; //global id
+    public struct CircleArg
+    {
+        public CircleID             CircleID;
+        public float                FinishHPosition;
+        public float                Speed;
+        public float                Radius;
+        public Action<CircleID, int>          FinishMove_CallBack;
+        public Action<CircleID, int, float>   OnClick_CallBack;
+    };
+
+    private int pool_ID = -1; //global pool id
     public  int Pool_ID
     {
         get { return pool_ID; }
@@ -41,7 +47,7 @@ public class CircleObj : MonoBehaviour
             if( _transform.position.z - args.Radius <= args.FinishHPosition )
             {
                 StopMoving();
-                if( args.FinishMove_CallBack!=null ) args.FinishMove_CallBack(args.ID, pool_ID);
+                if( args.FinishMove_CallBack!=null ) args.FinishMove_CallBack(args.CircleID, pool_ID);
             }
             yield return null;
         } 
@@ -55,7 +61,7 @@ public class CircleObj : MonoBehaviour
     public void OnClick( GameLogic.PlayerType type )
     {
         if(!isMoving) return;
-        if( type != args.ID.PlayerType ) return;
-        args.OnClick_CallBack( args.ID, pool_ID, transform.localScale.x);
+        if( type != args.CircleID.PlayerType ) return;
+        args.OnClick_CallBack( args.CircleID, pool_ID, transform.localScale.x);
     }
 }

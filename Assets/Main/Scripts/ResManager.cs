@@ -82,13 +82,13 @@ public class ResManager : MonoBehaviour
             _circleModel.GetComponent<CircleObj>().Pool_ID  = i;
             circlesPool[i] = _circleModel;
 
-            _texture = new Texture2D(32, 32);
+            _texture = new Texture2D(32, 32, TextureFormat.RGBA32, false);
             texturesPool[TextureSize.s32][i] = _texture;
-            _texture = new Texture2D(64, 64);
+            _texture = new Texture2D(64, 64, TextureFormat.RGBA32, false);
             texturesPool[TextureSize.s64][i] = _texture;
-            _texture = new Texture2D(128, 128);
+            _texture = new Texture2D(128, 128, TextureFormat.RGBA32, false);
             texturesPool[TextureSize.s128][i] = _texture;
-            _texture = new Texture2D(256, 256);
+            _texture = new Texture2D(256, 256, TextureFormat.RGBA32, false);
             texturesPool[TextureSize.s256][i] = _texture;
 
             materialsPool[i] = CircleMaterial;
@@ -97,17 +97,12 @@ public class ResManager : MonoBehaviour
     //-----------------------------------------
     private void GenerateTexture( TextureSize size, int num )
     {
-        Color start;
-        Color end;
         Color _color = new Color(0f,0f,0f,1f);
         Color[] _pix = new Color[0];
         int y = 0;
         int x = 0;
         int h = texturesPool[size][num].height;
         int w = texturesPool[size][num].width;
-
-        start   = new Color(Random.Range( 0f, 1f ), Random.Range( 0f, 1f ), Random.Range( 0f, 1f ), 0.5f);
-        end     = new Color(Random.Range( 0f, 1f ), Random.Range( 0f, 1f ), Random.Range( 0f, 1f ), 0.5f);
 
         switch( size )
         {
