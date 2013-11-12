@@ -7,7 +7,7 @@ public class CircleObj : MonoBehaviour
     public struct CircleID
     {
         public int                  ID; //local id for player
-        public GameLogic.PlayerType PlayerType;
+        public NetManager.PlayerType PlayerType;
     };
 
     public struct CircleArg
@@ -27,13 +27,13 @@ public class CircleObj : MonoBehaviour
         set { if( pool_ID == -1 ) pool_ID = value; }
     }
     public  GameObject  Model;
-    private CircleArg   args;
+    public  CircleArg   Args;
     private bool        isMoving = false;
     private Transform   _transform;
     //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     public void Init( CircleArg _args )
     {
-        args            = _args;
+        Args            = _args;
         isMoving        = true;
         _transform      = transform;
         StartCoroutine( IE_Moving() );
@@ -43,11 +43,11 @@ public class CircleObj : MonoBehaviour
     {
         while( isMoving )
         {
-            _transform.Translate( Vector3.back * args.Speed * Time.deltaTime );
-            if( _transform.position.z - args.Radius <= args.FinishHPosition )
+            _transform.Translate( Vector3.back * Args.Speed * Time.deltaTime );
+            if( _transform.position.z - Args.Radius <= Args.FinishHPosition )
             {
                 StopMoving();
-                if( args.FinishMove_CallBack!=null ) args.FinishMove_CallBack(args.CircleID, pool_ID);
+                if( Args.FinishMove_CallBack!=null ) Args.FinishMove_CallBack(Args.CircleID, pool_ID);
             }
             yield return null;
         } 
@@ -58,10 +58,10 @@ public class CircleObj : MonoBehaviour
         isMoving = false;
     }
     //------------------------------------
-    public void OnClick( GameLogic.PlayerType type )
+    public void OnClick( NetManager.PlayerType type )
     {
         if(!isMoving) return;
-        if( type != args.CircleID.PlayerType ) return;
-        args.OnClick_CallBack( args.CircleID, pool_ID, transform.localScale.x);
+        if( type != Args.CircleID.PlayerType ) return;
+        Args.OnClick_CallBack( Args.CircleID, pool_ID, transform.localScale.x);
     }
 }

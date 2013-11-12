@@ -4,17 +4,12 @@ using System;
 
 public class GameLogic : MonoBehaviour
 {
-    public enum PlayerType
-    {
-        Server,
-        Client,
-        Spectator
-    };
+    
     [Serializable]
     public class PlayerInitArg
     {
         public int         CurrentCirclesCount;
-        public PlayerType  PlayerType;
+        public NetManager.PlayerType  PlayerType;
         public int         Scores;
         public int         RandomSeed;
     };
@@ -22,7 +17,7 @@ public class GameLogic : MonoBehaviour
     public class PlayerArg
     {
         public int              CurrentCirclesCount;
-        public PlayerType       PlayerType;
+        public NetManager.PlayerType PlayerType;
         public int              Scores;
         public int              RandomSeed;
         public float            FinishHPosition;
@@ -33,8 +28,9 @@ public class GameLogic : MonoBehaviour
         public Vector3          CircleSpawnStartPositionRight; 
     };
     //--------------------------------------------
-    private PlayerArg   Player1;
-    private PlayerArg   Player2;
+    public PlayerArg   Player1;
+    public PlayerArg   Player2;
+    private NetManager.PlayerType currentPlayer;
 
     public Vector3     Player1CircleSpawnStartPositionLeft;   
     public Vector3     Player1CircleSpawnStartPositionRight; 
@@ -50,6 +46,9 @@ public class GameLogic : MonoBehaviour
     public AudioClip   BubbleSound;
     public AudioSource BubbleSource;
 
+    public delegate void OnClickDelegate( CircleObj.CircleID id );
+    public event OnClickDelegate OnClickCircleEvent;
+
     private const string SOUND_BUNDLE_URL = @"dl.dropboxusercontent.com/u/36321526/Circles/BubbleSound.unity3d";
 
     private bool                isGameStarted = false;
@@ -59,6 +58,8 @@ public class GameLogic : MonoBehaviour
     private Ray                     __ray;
     private RaycastHit              __hit;
     private CircleObj.CircleArg     _circleArg;
+
+    public bool iSpectractor = false;
     //==================================
     public IEnumerator Start()
     {
@@ -71,22 +72,22 @@ public class GameLogic : MonoBehaviour
             BubbleSound = Instantiate(www.assetBundle.mainAsset) as AudioClip;
         }
 
-        Init( new PlayerInitArg {PlayerType = PlayerType.Server, CurrentCirclesCount = 0, RandomSeed = 100, Scores = 0},
-              new PlayerInitArg {PlayerType = PlayerType.Client, CurrentCirclesCount = 0, RandomSeed = 100, Scores = 0} );
+        
     }
     //---------------------------------
-    public void Init( PlayerInitArg _Player1Arg, PlayerInitArg _Player2Arg)
+    public void Init( PlayerInitArg _Player1Arg, PlayerInitArg _Player2Arg, NetManager.PlayerType _currentPlayer)
     {
         Player1 = new PlayerArg();
         Player2 = new PlayerArg();
+        currentPlayer = _currentPlayer;
 
         Player1.CurrentCirclesCount              = _Player1Arg.CurrentCirclesCount;
         Player1.PlayerType                       = _Player1Arg.PlayerType;
         Player1.Scores                           = _Player1Arg.Scores;
         Player1.RandomSeed                       = _Player1Arg.RandomSeed;
         Player1.FinishHPosition                  = CircleMoveFinishHPosition;
-        Player1.FinishMove_CallBack              = FinishMove_CallBack;
-        Player1.OnClick_CallBack                 = OnClick_CallBack;
+        Player1.FinishMove_CallBack              = OnFinishMoveCircle;
+        Player1.OnClick_CallBack                 = OnClickCircle;
         Player1.Random                           = new System.Random(Player1.RandomSeed);
         Player1.CircleSpawnStartPositionLeft     = Player1CircleSpawnStartPositionLeft;
         Player1.CircleSpawnStartPositionRight    = Player1CircleSpawnStartPositionRight;
@@ -96,16 +97,36 @@ public class GameLogic : MonoBehaviour
         Player2.Scores                           = _Player2Arg.Scores;
         Player2.RandomSeed                       = _Player2Arg.RandomSeed;
         Player2.FinishHPosition                  = CircleMoveFinishHPosition;
-        Player2.FinishMove_CallBack              = FinishMove_CallBack;
-        Player2.OnClick_CallBack                 = OnClick_CallBack;
+        Player2.FinishMove_CallBack              = OnFinishMoveCircle;
+        Player2.OnClick_CallBack                 = OnClickCircle;
         Player2.Random                           = new System.Random(Player2.RandomSeed);
         Player2.CircleSpawnStartPositionLeft     = Player2CircleSpawnStartPositionLeft;
         Player2.CircleSpawnStartPositionRight    = Player2CircleSpawnStartPositionRight;
         
+        int i = 0;
+        if( Player1.CurrentCirclesCount > 0 )
+        {
+            i = 0;
+            while( i++ < Player1.CurrentCirclesCount )
+            {
+                Player1.Random.NextDouble();
+                Player1.Random.NextDouble();
+            }
+        }
+        if( Player2.CurrentCirclesCount > 0 )
+        {
+            i = 0;
+            while( i++ < Player2.CurrentCirclesCount )
+            {
+                Player2.Random.NextDouble();
+                Player2.Random.NextDouble();
+            }
+        }
+
         isGameStarted = true;
         StartCoroutine( IE_CircleGeneration() );
     }
-    //------------------------------------
+    //-----------------------------------------
     private IEnumerator IE_CircleGeneration()
     {
         while( isGameStarted )
@@ -152,40 +173,54 @@ public class GameLogic : MonoBehaviour
 
     }
     //------------------------------------
-    public void OnClick_CallBack( CircleObj.CircleID ID, int poolID, float circleSize )
+    public void DeleteCircle(CircleObj.CircleID ID)
     {
-        if( ID.PlayerType == Player1.PlayerType )
+        if( ID.PlayerType != currentPlayer )
         {
-            Player1.Scores += (int)( 10f/circleSize );
+            ResManager.Instance.PutBackCircle( ID );
+        }
+    }
+
+    public void OnClickCircle( CircleObj.CircleID ID, int poolID, float circleSize )
+    {
+        if( ID.PlayerType == currentPlayer )
+        {
+            if(currentPlayer == Player1.PlayerType) Player1.Scores += (int)( 10f/circleSize );
+                                               else Player2.Scores += (int)( 10f/circleSize );
             if(BubbleSound!=null) BubbleSource.PlayOneShot( BubbleSound );
+            if( OnClickCircleEvent != null )
+            {
+                OnClickCircleEvent(ID);
+            }
         }
         ResManager.Instance.PutBackCircle( poolID );
     }
 
-    public void FinishMove_CallBack( CircleObj.CircleID ID, int poolID )
+    public void OnFinishMoveCircle( CircleObj.CircleID ID, int poolID )
     {
         ResManager.Instance.PutBackCircle( poolID );
     }
     //---------------------------------------
-    private Rect rect1 = new Rect(10, 5, 150, 50);
-    private Rect rect2 = new Rect(Screen.width-160, 5, 150, 50);
+    private Rect rect1 = new Rect(10, 5, 150, 25);
+    private Rect rect2 = new Rect(Screen.width-160, 5, 150, 25);
 
     void OnGUI()
     {
         GUI.Label( rect1, "Player1 Scores:"+Player1.Scores );
+        GUI.Label( new Rect(10, 35, 150, 25), "Seed1="+Player1.RandomSeed+" Seed2="+Player2.RandomSeed );
         GUI.Label( rect2, "Player2 Scores:"+Player2.Scores );
     }
     //-----------------------------------------
     private void Update()
     {
-        if( isGameStarted )
+        if( isGameStarted && !iSpectractor)
         {
             if(Input.GetMouseButtonUp(0))
             {
                 __ray = Camera.main.ScreenPointToRay(Input.mousePosition);
                 if(Physics.Raycast(__ray, out __hit, 100, (1<<CircleLayer)))
                 {
-                    __hit.transform.gameObject.SendMessage( "OnClick", Player1.PlayerType );       
+                    __hit.transform.gameObject.SendMessage( "OnClick", currentPlayer );       
                 }
             }
         }

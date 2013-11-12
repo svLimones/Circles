@@ -16,7 +16,7 @@ public class ResManager : MonoBehaviour
     public  Material            CircleMaterial;
     public  int                 CircleLayer = 8;
 
-    private GameObject[]        circlesPool;
+    private CircleObj[]         circlesPool;
     private Material[]          materialsPool;
     private Dictionary<TextureSize, Texture2D[]> texturesPool;
     private Vector3             PoolPos         = new Vector3(100, 100, 100);
@@ -60,7 +60,7 @@ public class ResManager : MonoBehaviour
     {
         GameObject _circleModel;
         Texture2D  _texture;
-        circlesPool     = new GameObject[PoolLength];
+        circlesPool     = new CircleObj[PoolLength];
         texturesPool    = new Dictionary<TextureSize, Texture2D[]>();
         texturesPool.Add( TextureSize.s32,  new Texture2D[PoolLength] );
         texturesPool.Add( TextureSize.s64,  new Texture2D[PoolLength] );
@@ -80,7 +80,7 @@ public class ResManager : MonoBehaviour
             _circleModel.AddComponent<CircleObj>();
             _circleModel.GetComponent<CircleObj>().Model    = _circleModel.GetComponentInChildren<Renderer>().gameObject;
             _circleModel.GetComponent<CircleObj>().Pool_ID  = i;
-            circlesPool[i] = _circleModel;
+            circlesPool[i] = _circleModel.GetComponent<CircleObj>();
 
             _texture = new Texture2D(32, 32, TextureFormat.RGBA32, false);
             texturesPool[TextureSize.s32][i] = _texture;
@@ -145,7 +145,7 @@ public class ResManager : MonoBehaviour
         Color color3 = new Color(0f,0f,0f,0.6f);
 
         if( ++numCircles >= PoolLength ) numCircles = 0;
-        obj = circlesPool[numCircles].GetComponent<CircleObj>();
+        obj = circlesPool[numCircles];
         obj.Model.renderer.material = materialsPool[numCircles];
         obj.Model.renderer.material.mainTexture = texturesPool[textureSize][numCircles];
         GenerateTexture( textureSize, numCircles );
@@ -171,7 +171,20 @@ public class ResManager : MonoBehaviour
 
     public void PutBackCircle( int _pool_ID )
     {
-        circlesPool[_pool_ID].GetComponent<CircleObj>().StopMoving();
+        circlesPool[_pool_ID].StopMoving();
         circlesPool[_pool_ID].transform.position = PoolPos;
+    }
+
+    public void PutBackCircle( CircleObj.CircleID ID )
+    {
+        bool b = false;
+        for( int i = 0; i < PoolLength && !b; i++ )
+        {
+            if( circlesPool[i].Args.CircleID.PlayerType == ID.PlayerType &&  circlesPool[i].Args.CircleID.ID == ID.ID )
+            {
+                b = true;
+                PutBackCircle( i );
+            }
+        }
     }
 }
