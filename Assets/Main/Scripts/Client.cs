@@ -22,7 +22,7 @@ public class Client
     {
         netManager = _netManager;
     }
-    //------------------------------------------
+    //-------------------------------------------
 	public string Connect(string sNetIP, int iPORT_NUM, string sUserName)
 	{
 		try 
@@ -102,17 +102,20 @@ public class Client
 		{
 			case "JOIN":
 				// Server acknowledged login.
-		        netManager.OnStartGame( dataArray[1] );
+		        netManager.ScheduleCallback2(netManager.OnStartGame, dataArray[1]);
+		        //netManager.OnStartGame( dataArray[1] );
 				res= "You have joined the chat";
 				break;
             case "JOIN_AS_SPECTRACTOR":
 				// Server acknowledged login.
-		        netManager.StartSpectractor( dataArray[1] );
+                netManager.ScheduleCallback2(netManager.StartSpectractor, dataArray[1]);
+		        //netManager.StartSpectractor( dataArray[1] );
 				res= "You have joined as Spectractor";
 				break;
 			case "CLICK":
 				// Received chat message, display it.
-		        netManager.OnCliclCircle_NetReport(dataArray[1]);
+                netManager.ScheduleCallback2(netManager.OnCliclCircle_NetReport, dataArray[1]);
+		        //netManager.OnCliclCircle_NetReport(dataArray[1]);
 				res=  dataArray[1].ToString();
 				break;
 			case "REFUSE":

@@ -6,7 +6,7 @@ using UnityEngine;
 
 public class Server
 {
-    private string      playerName;
+    private string     playerName;
     private int         PORT_NUM = 3333;
     private Hashtable   clients = new Hashtable();
     private TcpListener listener;
@@ -55,7 +55,8 @@ public class Server
             {
                 ReplyToSender("JOIN|"+netManager.GetPlayersArgs(), sender);
                 isTwoPlayers = true;
-                netManager.StartGame();
+                //netManager.StartGame();
+                netManager.ScheduleCallback(netManager.StartGame);
             }
             else
             {
@@ -141,7 +142,8 @@ public class Server
                 ConnectUser(dataArray[1], sender);
 				break;
             case "CLICK":
-		        netManager.OnCliclCircle_NetReport(dataArray[1]);
+                netManager.ScheduleCallback2(netManager.OnCliclCircle_NetReport, dataArray[1]);
+		        //netManager.OnCliclCircle_NetReport(dataArray[1]);
                 SendChat(dataArray[1], sender);
 				break;
             case "DISCONNECT":

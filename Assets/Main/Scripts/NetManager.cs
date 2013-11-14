@@ -11,7 +11,7 @@ public class NetManager : MonoBehaviour
         Client = 1,
         Spectator = 2
     };
-    //------------------------
+    //-------------------------
     public GameLogic GameLogic;
 
     private const int GAME_VERSION = 1;
@@ -120,24 +120,27 @@ public class NetManager : MonoBehaviour
 
     public string GetPlayersArgs()
     {
-        string str;
-        arg1.RandomSeed = 1000;
-        arg1.Scores     = 0;
-        arg1.CurrentCirclesCount = 0;
+        lock(this)
+        {
+            string str;
+            arg1.RandomSeed             = 1000;
+            arg1.Scores                 = 0;
+            arg1.CurrentCirclesCount    = 0;
 
-        arg2.RandomSeed = 2222;
-        arg2.Scores     = 0;
-        arg2.CurrentCirclesCount = 0;
+            arg2.RandomSeed             = 2222;
+            arg2.Scores                 = 0;
+            arg2.CurrentCirclesCount    = 0;
 
-        str = arg1.RandomSeed.ToString();
-        str += ":"+GameLogicScr.Player1.Scores.ToString();
-        str += ":"+GameLogicScr.Player1.CurrentCirclesCount;
+            str = arg1.RandomSeed.ToString();
+            str += ":"+GameLogicScr.Player1.Scores.ToString();
+            str += ":"+GameLogicScr.Player1.CurrentCirclesCount;
 
-        str += ":"+arg2.RandomSeed.ToString();
-        str += ":"+GameLogicScr.Player2.Scores.ToString();
-        str += ":"+GameLogicScr.Player2.CurrentCirclesCount;
+            str += ":"+arg2.RandomSeed.ToString();
+            str += ":"+GameLogicScr.Player2.Scores.ToString();
+            str += ":"+GameLogicScr.Player2.CurrentCirclesCount;
 
-        return str;
+            return str;
+        }
     }
     //----------------------------
     private void OnClickCircle( CircleObj.CircleID ID )
@@ -235,5 +238,43 @@ public class NetManager : MonoBehaviour
     {
         GameLogicScr.OnClickCircleEvent -= OnClickCircle;
         Disconnect();
+    }
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    private class DelegateSrtArg
+    {
+        public string Arg;
+        public Anonymous2 Delegate;
+    };
+
+    public delegate void Anonymous ();
+    public delegate void Anonymous2 (string str);
+    List<Anonymous> callbacks = new List<Anonymous> ();
+    List<DelegateSrtArg> callbacks2 = new List<DelegateSrtArg> ();
+
+    public void Update ()
+    {
+    Anonymous[] c;
+    DelegateSrtArg[] c2;
+    lock(this) {
+    c = callbacks.ToArray();
+    callbacks.Clear();  
+    c2 = callbacks2.ToArray();
+    callbacks.Clear(); 
+    callbacks2.Clear();  
+    }
+    foreach(var i in c) i();
+    foreach(var i in c2) i.Delegate(i.Arg);
+    }
+ 
+    public void ScheduleCallback(Anonymous fn) {
+        lock(this) {
+            callbacks.Add(fn);
+        }
+    }
+
+    public void ScheduleCallback2(Anonymous2 fn, string str) {
+        lock(this) {
+            callbacks2.Add(new DelegateSrtArg(){ Arg = str, Delegate = fn});
+        }
     }
 }

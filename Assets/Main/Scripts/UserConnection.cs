@@ -24,7 +24,7 @@ public class UserConnection
     private byte[] readBuffer = new byte[READ_BUFFER_SIZE];
     private string strName;
  
-    // The Name property uniquely identifies the user connection.
+    // The Name property uniquely identifies the user connection .
     public string Name
 	{
         get {
@@ -41,13 +41,13 @@ public class UserConnection
     public void SendData(string Data)
 	{
         //lock ensure that no other threads try to use the stream at the same time.
-        //lock (client.GetStream())
-		//{
+        lock (client.GetStream())
+		{
 			StreamWriter writer = new StreamWriter(client.GetStream());
 			writer.Write(Data + (char) 13 + (char) 10);
 			// Make sure all data is sent now.
 			writer.Flush();
-		//}
+		}
     }
  
     // This is the callback function for TcpClient.GetStream.Begin. It begins an 
@@ -59,15 +59,20 @@ public class UserConnection
  
         try 
 		{
-			// Finish asynchronous read into readBuffer and get number of bytes read.
-			BytesRead = client.GetStream().EndRead(ar);
-            // Convert the byte array the message was saved into, minus one for the
+		    lock(client.GetStream())
+		    {
+		        BytesRead = client.GetStream().EndRead( ar );
+		    }
+		    // Convert the byte array the message was saved into, minus one for the
             // Chr(13).
             strMessage = Encoding.ASCII.GetString(readBuffer, 0, BytesRead - 1);
             LineReceived(this, strMessage);
             // Ensure that no other threads try to use the stream at the same time.
 			// Start a new asynchronous read into readBuffer.
-			client.GetStream().BeginRead(readBuffer, 0, READ_BUFFER_SIZE, new AsyncCallback(StreamReceiver), null);
+		    lock(client.GetStream())
+		    {
+		        client.GetStream().BeginRead( readBuffer, 0, READ_BUFFER_SIZE, new AsyncCallback( StreamReceiver ), null );
+		    }
 		} 
 		catch( Exception e){
         }
